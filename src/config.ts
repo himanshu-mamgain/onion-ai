@@ -66,6 +66,13 @@ const LoggingMonitoringAndAuditSchema = z.object({
     alertOnSuspiciousPatterns: z.boolean().default(true),
 });
 
+const EnhanceSchema = z.object({
+    enabled: z.boolean().default(false),
+    addSystemSafetyPreamble: z.boolean().default(true),
+    structurePrompt: z.boolean().default(true),
+    preserveContext: z.boolean().default(true)
+});
+
 export const OnionConfigSchema = z.object({
     inputSanitization: InputSanitizationSchema.default({
         sanitizeHtml: true,
@@ -120,10 +127,24 @@ export const OnionConfigSchema = z.object({
         logResponse: true,
         alertOnSuspiciousPatterns: true,
     }),
+    enhance: EnhanceSchema.default({
+        enabled: false,
+        addSystemSafetyPreamble: true,
+        structurePrompt: true,
+        preserveContext: true
+    })
 });
 
 export type OnionConfig = z.infer<typeof OnionConfigSchema>;
 export type OnionInputConfig = z.input<typeof OnionConfigSchema>;
+
+export interface SimpleOnionConfig {
+    dbSafe?: boolean;
+    preventPromptInjection?: boolean;
+    enhance?: boolean;
+    debug?: boolean;
+    onWarning?: (threats: string[]) => void;
+}
 
 export interface SecurityResult {
     safe: boolean;
