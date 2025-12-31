@@ -132,6 +132,21 @@ export const OnionConfigSchema = z.object({
         addSystemSafetyPreamble: true,
         structurePrompt: true,
         preserveContext: true
+    }),
+    piiProtection: z.object({
+        enabled: z.boolean().default(false),
+        maskEmail: z.boolean().default(true),
+        maskPhone: z.boolean().default(true),
+        maskCreditCard: z.boolean().default(true),
+        maskSSN: z.boolean().default(true),
+        maskIP: z.boolean().default(true)
+    }).default({
+        enabled: false,
+        maskEmail: true,
+        maskPhone: true,
+        maskCreditCard: true,
+        maskSSN: true,
+        maskIP: true
     })
 });
 
@@ -142,6 +157,7 @@ export interface SimpleOnionConfig {
     dbSafe?: boolean;
     preventPromptInjection?: boolean;
     enhance?: boolean;
+    piiSafe?: boolean;
     debug?: boolean;
     onWarning?: (threats: string[]) => void;
 }

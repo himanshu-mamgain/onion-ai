@@ -5,6 +5,7 @@ import { Sentry } from './layers/sentry';
 import { Vault } from './layers/vault';
 import { Validator } from './layers/validator';
 import { Enhancer } from './layers/enhancer';
+import { Privacy } from './layers/privacy';
 
 // Helper to determine return type
 export interface SafePromptResult {
@@ -23,6 +24,7 @@ export class OnionAI {
     private vault: Vault;
     private validator: Validator;
     private enhancer: Enhancer;
+    private privacy: Privacy;
 
     constructor(config: OnionInputConfig | SimpleOnionConfig = {}) {
         // Handle Simple Configuration
@@ -36,7 +38,8 @@ export class OnionAI {
                     // Defaults will apply unless customized deeply
                 },
                 enhance: { enabled: config.enhance ?? false },
-                loggingMonitoringAndAudit: { logRequests: config.debug ?? false }
+                loggingMonitoringAndAudit: { logRequests: config.debug ?? false },
+                piiProtection: { enabled: config.piiSafe ?? false }
             };
         } else {
             finalConfig = config as OnionInputConfig;
@@ -51,10 +54,11 @@ export class OnionAI {
         this.vault = new Vault(this.config.dbProtection);
         this.validator = new Validator(this.config.outputValidation);
         this.enhancer = new Enhancer(this.config.enhance);
+        this.privacy = new Privacy(this.config.piiProtection);
     }
 
     private isSimpleConfig(config: any): config is SimpleOnionConfig {
-        return 'dbSafe' in config || 'enhance' in config || 'preventPromptInjection' in config || 'onWarning' in config;
+        return 'dbSafe' in config || 'enhance' in config || 'preventPromptInjection' in config || 'onWarning' in config || 'piiSafe' in config;
     }
 
     /**
@@ -97,6 +101,11 @@ export class OnionAI {
         // 1. Sanitization (XSS / Hidden chars)
         const sanResult = this.sanitizer.validate(prompt);
         sanitizedPrompt = sanResult.sanitizedValue || prompt;
+
+        // 1.5 PII Redaction
+        const piiResult = this.privacy.anonymize(sanitizedPrompt);
+        sanitizedPrompt = piiResult.sanitizedValue || sanitizedPrompt;
+        if (!piiResult.safe) threats.push(...piiResult.threats);
 
         // 2. Prompt Injection (Firewall)
         // Only run if configured enabled (defaults true)
@@ -152,4 +161,5 @@ export class OnionAI {
 }
 
 export * from './config';
+export * from './middleware';
 
