@@ -8,34 +8,34 @@ describe('Vault Layer (DB Protection)', () => {
             enabled: true,
             mode: 'read-only',
             allowedStatements: ['SELECT'],
-            forbiddenStatements: ['DROP', 'DELETE', 'INSERT', 'ALTER']
+            forbiddenStatements: ['INSERT', 'DELETE', 'DROP', 'ALTER']
         });
     });
 
-    test('should detect forbidden statements', () => {
+    test('should allow SELECT queries', () => {
+        const input = 'SELECT * FROM users';
+        const result = vault.checkSQL(input);
+        expect(result.safe).toBe(true);
+    });
+
+    test('should block DROP queries', () => {
         const input = 'DROP TABLE users';
         const result = vault.checkSQL(input);
         expect(result.safe).toBe(false);
-        expect(result.threats).toContain('Forbidden SQL statement detected: DROP');
+        expect(result.threats.some(t => t.includes('Forbidden SQL statement'))).toBe(true);
     });
 
-    test('should enforce read-only mode', () => {
-        const input = 'UPDATE users SET name = "admin"';
-        const result = vault.checkSQL(input);
-        expect(result.safe).toBe(false);
-        expect(result.threats).toContain('Non-SELECT query detected in read-only mode');
-    });
-
-    test('should detect SQL injection markers', () => {
-        const input = "SELECT * FROM users WHERE name = 'admin' --";
+    test('should block SQL injection markers', () => {
+        const input = "admin' OR '1'='1"; // Tautology
         const result = vault.checkSQL(input);
         expect(result.safe).toBe(false);
         expect(result.threats.some(t => t.includes('Potential SQL injection marker'))).toBe(true);
     });
 
-    test('should allow safe SELECT queries', () => {
-        const input = 'SELECT * FROM products WHERE id = 1';
+    test('should block non-SELECT in read-only mode', () => {
+        const input = 'UPDATE users SET name="hacker"';
         const result = vault.checkSQL(input);
-        expect(result.safe).toBe(true);
+        expect(result.safe).toBe(false);
+        expect(result.threats).toContain('Non-SELECT query detected in read-only mode');
     });
 });

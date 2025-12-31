@@ -1,6 +1,6 @@
 import { Sentry } from '../src/layers/sentry';
 
-describe('Sentry Layer (Rate Limiting)', () => {
+describe('Sentry Layer (Resource Control)', () => {
     let sentry: Sentry;
 
     beforeEach(() => {
@@ -8,32 +8,32 @@ describe('Sentry Layer (Rate Limiting)', () => {
             maxTokensPerPrompt: 10,
             maxTokensPerResponse: 100,
             maxTokensPerMinute: 1000,
-            maxRequestsPerMinute: 2, // Low limit for testing
+            maxRequestsPerMinute: 2,
             preventRecursivePrompts: true
         });
     });
 
-    test('should enforce rate checking', () => {
+    test('should allow prompts within token limit', () => {
+        const input = 'Short prompt';
+        const result = sentry.checkTokenCount(input);
+        expect(result.safe).toBe(true);
+    });
+
+    test('should block prompts exceeding token limit', () => {
+        const input = 'This is a very long prompt that should definitely exceed the small limit we set of 10 tokens estimated.';
+        const result = sentry.checkTokenCount(input);
+        expect(result.safe).toBe(false);
+        expect(result.threats[0]).toContain('exceeds max token limit');
+    });
+
+    test('should enforce rate limits', () => {
         // 1st request
         expect(sentry.checkRateLimit().safe).toBe(true);
         // 2nd request
         expect(sentry.checkRateLimit().safe).toBe(true);
-        // 3rd request (should fail)
+        // 3rd request (should fail, max 2)
         const result = sentry.checkRateLimit();
         expect(result.safe).toBe(false);
         expect(result.threats).toContain('Rate limit exceeded (Max requests per minute)');
-    });
-
-    test('should check token limits', () => {
-        const longPrompt = 'This is a prompt that is definitely going to exceed the very small token limit set in the configuration.';
-        const result = sentry.checkTokenCount(longPrompt);
-        expect(result.safe).toBe(false);
-        expect(result.threats.some(t => t.includes('Prompt exceeds max token limit'))).toBe(true);
-    });
-
-    test('should allow short prompts within limits', () => {
-        const shortPrompt = 'Hi';
-        const result = sentry.checkTokenCount(shortPrompt);
-        expect(result.safe).toBe(true);
     });
 });
