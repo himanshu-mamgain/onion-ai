@@ -1,91 +1,59 @@
 import { OnionAI } from './index';
-import { SimpleOnionConfig, OnionInputConfig } from './config';
-
-export interface OnionMiddlewareOptions {
-    /** Configuration for the OnionAI instance */
-    config?: SimpleOnionConfig | OnionInputConfig;
-
-    /** The key in req.body to secure. Default is "prompt". */
-    fieldName?: string;
-
-    /** 
-     * If true, sends a 400 response when threats are detected. 
-     * If false, attaches threats to `req.onionThreats` and proceeds.
-     * Default: true
-     */
-    blockOnThreats?: boolean;
-
-    /** Custom error handler. If provided, responsible for sending the response. */
-    errorHandler?: (res: any, threats: string[]) => void;
-}
+// Helper type for generic middleware signature
+type MiddlewareNext = () => Promise<void> | void;
 
 /**
- * Express/Connect compatible middleware for OnionAI.
- * Automatically sanitizes and checks prompts in the request body.
+ * Creates an Express/Connect style middleware for OnionAI.
  * 
- * Usage:
- * app.use(onionMiddleware({ config: { debug: true } }));
+ * @param onion - The OnionAI instance
+ * @param options - Configuration for mapping request body fields
+ * @returns Middleware function
  * 
- * Or for specific route:
- * app.post('/chat', onionMiddleware({ fieldName: 'userQuery' }), chatHandler);
+ * @example
+ * app.use(onionRing(new OnionAI(), { promptField: 'body.query' }));
  */
-export const onionMiddleware = (options: OnionMiddlewareOptions = {}) => {
-    const onion = new OnionAI(options.config);
-    const field = options.fieldName || 'prompt';
-    const shouldBlock = options.blockOnThreats ?? true;
+export function onionRing(onion: OnionAI, options: { promptField?: string; outputField?: string } = {}) {
+    const promptPath = options.promptField || 'body.prompt';
 
-    return async (req: any, res: any, next: any) => {
-        // Ensure body exists
-        if (!req.body) {
-            return next();
-        }
-
-        const input = req.body[field];
-
-        if (!input || typeof input !== 'string') {
-            return next(); // Ignore if target field is missing or not a string
-        }
-
+    return async (req: any, res: any, next: MiddlewareNext) => {
         try {
-            // Using securePrompt to get detailed status (we don't run Enhancer in middleware usually, just security)
-            const result = await onion.securePrompt(input);
+            // 1. Resolve prompt from request
+            const prompt = getNestedValue(req, promptPath);
 
-            if (!result.safe) {
-                // Attach threats to request regardless of blocking policy (logs/debugging)
-                req.onionThreats = result.threats;
+            if (typeof prompt === 'string') {
+                const safePrompt = await onion.sanitize(prompt, (threats) => {
+                    // Attach threats to request for logging downstream
+                    req.onionThreats = threats;
+                });
 
-                if (shouldBlock) {
-                    if (options.errorHandler) {
-                        return options.errorHandler(res, result.threats);
-                    }
+                // 2. Replace the prompt in the request body with the sanitized version
+                setNestedValue(req, promptPath, safePrompt);
 
-                    // Default Error Response
-                    if (typeof res.status === 'function') {
-                        return res.status(400).json({
-                            error: 'Security Alert: Potentially malicious content detected.',
-                            threats: result.threats,
-                            code: 'ONION_BLOCK'
-                        });
-                    } else {
-                        // Basic support for non-express or mock objects
-                        res.statusCode = 400;
-                        res.end(JSON.stringify({ error: 'Security Alert', threats: result.threats }));
-                        return;
-                    }
+                if (!safePrompt && req.onionThreats?.length > 0) {
+                    // Option: Block request entirely if heavily compromised? 
+                    // For now, we pass the empty/sanitized string. 
+                    // Users can check req.onionThreats to decide to 400.
                 }
             }
 
-            // Replace the input with the sanitized/redacted version
-            req.body[field] = result.output;
-
-            // Attach metadata
-            req.onionSafe = result.safe;
-            req.onionMetadata = result.metadata;
-
             next();
         } catch (error) {
-            console.error("OnionAI Middleware Error:", error);
-            next(error);
+            console.error('[OnionAI Middleware Error]', error);
+            next();
         }
     };
-};
+}
+
+// Helpers
+function getNestedValue(obj: any, path: string): any {
+    return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+}
+
+function setNestedValue(obj: any, path: string, value: any): void {
+    const parts = path.split('.');
+    const last = parts.pop();
+    const target = parts.reduce((acc, part) => acc && acc[part], obj);
+    if (target && last) {
+        target[last] = value;
+    }
+}

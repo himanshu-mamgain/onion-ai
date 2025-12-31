@@ -1,6 +1,6 @@
 {
   "name": "onion-ai",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Layered security for AI prompting - input sanitization, injection protection, and output validation.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -24,7 +24,11 @@
     "prompt-injection",
     "sanitization",
     "xss",
-    "sql-injection"
+    "sql-injection",
+    "pii-redaction",
+    "ai-security",
+    "middleware",
+    "express"
   ],
   "author": "Himanshu Mamgain",
   "license": "MIT",
