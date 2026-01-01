@@ -158,7 +158,17 @@ export const OnionConfigSchema = z.object({
     logger: z.custom<{
         log: (message: string, meta?: any) => void;
         error: (message: string, meta?: any) => void;
-    }>((val) => typeof val === 'object' && val !== null && 'log' in val).optional()
+    }>((val) => typeof val === 'object' && val !== null && 'log' in val).optional(),
+
+    // Intent Classification Plugin (Layer 2)
+    intentClassifier: z.function()
+        .args(z.string())
+        .returns(z.promise(z.object({
+            intent: z.enum(["SAFE", "ROLE_ESCALATION", "INSTRUCTION_OVERRIDE", "CONTEXT_SHIFT", "DATA_EXFILTRATION", "POLICY_EVASION", "UNKNOWN"]),
+            confidence: z.number(),
+            metadata: z.any().optional()
+        })))
+        .optional()
 });
 
 export type OnionConfig = z.infer<typeof OnionConfigSchema>;
@@ -175,6 +185,11 @@ export interface SimpleOnionConfig {
         log: (message: string, meta?: any) => void;
         error: (message: string, meta?: any) => void;
     };
+    intentClassifier?: (prompt: string) => Promise<{
+        intent: "SAFE" | "ROLE_ESCALATION" | "INSTRUCTION_OVERRIDE" | "CONTEXT_SHIFT" | "DATA_EXFILTRATION" | "POLICY_EVASION" | "UNKNOWN";
+        confidence: number;
+        metadata?: any;
+    }>;
     onWarning?: (threats: string[]) => void;
 }
 

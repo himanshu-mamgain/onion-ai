@@ -26,14 +26,20 @@ export class Guard {
         // 2. Heuristics (Medium weighting 0.4 - 0.7)
         const injectionPatterns = [
             { pattern: /translate\s+the\s+above/i, weight: 0.4 },
-            { pattern: /ignore\s+all\s+previous/i, weight: 0.8 },
+            { pattern: /ignore\s+(all\s+|those\s+)?(previous\s+|safety\s+)?(instructions|restrictions|rules)/i, weight: 0.9 }, // PI-001, PI-008
+            { pattern: /judge\s+by\s+your\s+rules/i, weight: 0.5 },
             { pattern: /instead\s+of/i, weight: 0.3 },
             { pattern: /system\s+prompt/i, weight: 0.6 },
-            { pattern: /you\s+are\s+now/i, weight: 0.7 },
-            { pattern: /disregard\s+instructions/i, weight: 0.8 },
-            { pattern: /bypass\s+restrictions/i, weight: 0.8 },
+            { pattern: /you\s+are\s+(now\s+)?(a\s+)?(system|admin|root|developer)/i, weight: 0.8 }, // PI-003
+            { pattern: /this\s+is\s+the\s+(developer|admin|system)/i, weight: 0.8 }, // PI-004
+            { pattern: /break\s+(previous\s+)?(rules|instructions)/i, weight: 0.8 }, // PI-004 support
+            { pattern: /disregard\s+(all\s+)?(safety\s+)?(instructions|rules|protocols)/i, weight: 0.9 },
+            { pattern: /bypass\s+(restrictions|rules|controls)/i, weight: 0.9 },
+            { pattern: /not\s+bound\s+by/i, weight: 0.8 }, // PI-006
             { pattern: /DAN\s+Mode/i, weight: 0.9 },
-            { pattern: /do\s+anything\s+now/i, weight: 0.8 }
+            { pattern: /do\s+anything\s+now/i, weight: 0.9 },
+            { pattern: /reveal\s+(hidden\s+)?(instructions|rules|system)/i, weight: 0.9 }, // PI-007
+            { pattern: /disable\s+(all\s+)?(safety\s+)?rules/i, weight: 0.9 } // PI-003
         ];
 
         for (const item of injectionPatterns) {
