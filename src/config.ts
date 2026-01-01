@@ -177,7 +177,18 @@ export const OnionConfigSchema = z.object({
             confidence: z.number(),
             metadata: z.any().optional()
         })))
-        .optional()
+        .optional(),
+
+    // Signature Configuration
+    signature: z.object({
+        enabled: z.boolean().default(false),
+        secret: z.string().optional(),
+        mode: z.enum(['none', 'hmac', 'steganography', 'dual']).default('dual'),
+        globalMetadata: z.any().optional()
+    }).default({
+        enabled: false,
+        mode: 'dual'
+    })
 });
 
 export type OnionConfig = z.infer<typeof OnionConfigSchema>;

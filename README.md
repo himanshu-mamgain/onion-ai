@@ -234,6 +234,34 @@ app.post('/chat', onionRing(onion, { promptField: 'body.prompt' }), (req, res) =
 });
 ```
 
+### 3. Data Signature & Watermarking
+**Authenticity & Provenance Tracking**
+
+Securely sign your AI outputs to prove they came from your system or track leaks using invisible steganography.
+
+```typescript
+const onion = new OnionAI({
+    signature: {
+        enabled: true,
+        secret: process.env.SIGNATURE_SECRET, // Must be 32+ chars
+        mode: 'dual' // 'hmac', 'steganography', or 'dual' (default)
+    }
+});
+
+// 1. Sign Content (e.g., before publishing)
+const result = onion.sign("AI Generated Report", { employeeId: "emp_123" });
+
+console.log(result.signature); // HMAC signature string
+// result.content now contains invisible zero-width chars with encrypted metadata
+
+// 2. Verify Content (e.g., if you find leaked text)
+const verification = onion.verify(result.content, result.signature);
+
+if (verification.isValid) {
+    console.log("Verified! Source:", verification.payload.employeeId);
+}
+```
+
 ---
 
 ## 🔐 OWASP LLM Top 10 Compliance

@@ -7,6 +7,7 @@ import { Validator } from './layers/validator';
 import { Enhancer } from './layers/enhancer';
 import { Privacy } from './layers/privacy';
 import { ToonConverter } from './layers/toon';
+import { SignatureEngine, VerificationResult } from './layers/signature';
 
 // Helper to determine return type
 export interface SafePromptResult {
@@ -27,6 +28,7 @@ export class OnionAI {
     private validator: Validator;
     private enhancer: Enhancer;
     private privacy: Privacy;
+    private signatureEngine?: SignatureEngine;
 
     constructor(config: OnionInputConfig | SimpleOnionConfig = {}) {
         // Handle Simple Configuration
@@ -59,6 +61,17 @@ export class OnionAI {
         this.validator = new Validator(this.config.outputValidation);
         this.enhancer = new Enhancer(this.config.enhance);
         this.privacy = new Privacy(this.config.piiProtection);
+
+        // Initialize Signature Engine if configured
+        if (this.config.signature.enabled) {
+            if (!this.config.signature.secret) {
+                throw new Error("OnionAI Config Error: 'signature.secret' is required when signature is enabled.");
+            }
+            this.signatureEngine = new SignatureEngine({
+                secret: this.config.signature.secret,
+                mode: this.config.signature.mode
+            });
+        }
     }
 
     private isSimpleConfig(config: any): config is SimpleOnionConfig {
@@ -275,9 +288,44 @@ export class OnionAI {
     async secureResponse(response: string): Promise<SecurityResult> {
         return this.validator.validateOutput(response);
     }
+
+    /**
+     * Signs or embeds data into the content.
+     */
+    sign(content: string, metadata?: any): { content: string; signature?: string } {
+        if (!this.signatureEngine) {
+            throw new Error("Data Signature is not enabled in configuration.");
+        }
+        return this.signatureEngine.sign(content, metadata || this.config.signature.globalMetadata);
+    }
+
+    /**
+     * Verifies content authenticity and extracts hidden metadata.
+     */
+    verify(content: string, signature?: string): VerificationResult {
+        if (!this.signatureEngine) {
+            throw new Error("Data Signature is not enabled in configuration.");
+        }
+
+        // Steganography Detection
+        if (this.config.signature.mode === 'steganography' || this.config.signature.mode === 'dual') {
+            const stegoResult = this.signatureEngine.extract(content);
+            if (stegoResult.isValid) return stegoResult;
+        }
+
+        // HMAC Check
+        if ((this.config.signature.mode === 'hmac' || this.config.signature.mode === 'dual') && signature) {
+            const isValid = this.signatureEngine.verifyHMAC(content, signature);
+            return { isValid };
+        }
+
+        return { isValid: false, error: "No valid signature or watermark found" };
+    }
 }
 
 export * from './config';
 export * from './middleware';
+export * from './middleware';
 export * from './classifiers';
+export * from './layers/signature';
 
