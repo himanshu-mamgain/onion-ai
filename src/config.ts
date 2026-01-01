@@ -140,6 +140,7 @@ export const OnionConfigSchema = z.object({
         maskCreditCard: z.boolean().default(true),
         maskSSN: z.boolean().default(true),
         maskIP: z.boolean().default(true),
+        detectSecrets: z.boolean().default(true),
         custom: z.array(z.object({
             name: z.string(),
             pattern: z.instanceof(RegExp).optional(),
@@ -152,7 +153,8 @@ export const OnionConfigSchema = z.object({
         maskPhone: true,
         maskCreditCard: true,
         maskSSN: true,
-        maskIP: true
+        maskIP: true,
+        detectSecrets: true
     }),
     // Plugins & Logger (Optional runtime objects)
     logger: z.custom<{
@@ -191,6 +193,7 @@ export interface SimpleOnionConfig {
         metadata?: any;
     }>;
     onWarning?: (threats: string[]) => void;
+    convertToToon?: boolean;
 }
 
 export interface SecurityResult {

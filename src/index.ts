@@ -6,6 +6,7 @@ import { Vault } from './layers/vault';
 import { Validator } from './layers/validator';
 import { Enhancer } from './layers/enhancer';
 import { Privacy } from './layers/privacy';
+import { ToonConverter } from './layers/toon';
 
 // Helper to determine return type
 export interface SafePromptResult {
@@ -61,7 +62,7 @@ export class OnionAI {
     }
 
     private isSimpleConfig(config: any): config is SimpleOnionConfig {
-        return 'dbSafe' in config || 'enhance' in config || 'preventPromptInjection' in config || 'onWarning' in config || 'piiSafe' in config;
+        return 'dbSafe' in config || 'enhance' in config || 'preventPromptInjection' in config || 'onWarning' in config || 'piiSafe' in config || 'convertToToon' in config;
     }
 
     /**
@@ -98,7 +99,12 @@ export class OnionAI {
 
         // 2. Enhance (if enabled)
         // We always try to enhance the output we have, even if it had warnings (as long as it wasn't empty)
-        const output = this.enhancer.enhance(secLikelihood.output);
+        let output = this.enhancer.enhance(secLikelihood.output);
+
+        // 3. TOON Conversion (if enabled)
+        if (this.simpleConfig?.convertToToon) {
+            output = ToonConverter.convert(output, secLikelihood.riskScore, secLikelihood.threats);
+        }
 
         return output;
     }
@@ -125,7 +131,7 @@ export class OnionAI {
         sanitizedPrompt = piiResult.sanitizedValue || sanitizedPrompt;
         if (!piiResult.safe) {
             threats.push(...piiResult.threats);
-            cumulativeRiskScore = Math.max(cumulativeRiskScore, 0.4); // PII is medium risk
+            cumulativeRiskScore = Math.max(cumulativeRiskScore, piiResult.riskScore || 0);
         }
 
         // 2. Prompt Injection (Firewall)

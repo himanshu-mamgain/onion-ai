@@ -10,7 +10,9 @@ describe('Privacy Layer (PII Redaction)', () => {
             maskPhone: true,
             maskCreditCard: true,
             maskSSN: true,
-            maskIP: true
+            maskIP: true,
+            detectSecrets: true,
+            custom: []
         });
     });
 
@@ -23,7 +25,7 @@ describe('Privacy Layer (PII Redaction)', () => {
     });
 
     test('should redact phone numbers', () => {
-        const input = 'Call 555-0199 or (555) 123-4567';
+        const input = 'Call 555-555-0199 or (555) 123-4567';
         const result = privacy.anonymize(input);
         expect(result.sanitizedValue).toContain('[PHONE_REDACTED]');
         expect(result.sanitizedValue).not.toContain('555-0199');
@@ -42,5 +44,27 @@ describe('Privacy Layer (PII Redaction)', () => {
         expect(result.safe).toBe(true);
         expect(result.threats.length).toBe(0);
         expect(result.sanitizedValue).toBe(input);
+    });
+
+    test('should detect and redact secrets (API Keys) and assign high risk', () => {
+        // Override config for this test if needed, but we can just crea a new instance
+        const privacyWithSecrets = new Privacy({
+            enabled: true,
+            maskEmail: true,
+            maskPhone: true,
+            maskCreditCard: true,
+            maskSSN: true,
+            maskIP: true,
+            detectSecrets: true,
+            custom: []
+        });
+
+        const input = 'My OpenAI key is sk-abcdef1234567890abcdef1234567890abcdef123456 and GitHub token is ghp_1234567890abcdef1234567890abcdef36char';
+        const result = privacyWithSecrets.anonymize(input);
+
+        expect(result.sanitizedValue).toContain('[SECRET_OPENAI_REDACTED]');
+        expect(result.sanitizedValue).toContain('[SECRET_GITHUB_REDACTED]');
+        expect(result.threats.some(t => t.includes('CRITICAL'))).toBe(true);
+        expect(result.riskScore).toBe(1.0);
     });
 });

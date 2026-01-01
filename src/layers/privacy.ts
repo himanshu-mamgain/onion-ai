@@ -62,6 +62,26 @@ export class Privacy {
             }
         }
 
+        // Secret Scanning (High Priority)
+        let foundSecret = false;
+        if (this.config.detectSecrets) {
+            const secretPatterns: Record<string, RegExp> = {
+                openai: /sk-[a-zA-Z0-9]{20,}/g,
+                github: /gh[pousr]_[a-zA-Z0-9]{36,}/g,
+                aws: /\bAKIA[0-9A-Z]{16}\b/g,
+                privateKey: /-----BEGIN [A-Z ]+ PRIVATE KEY-----/g,
+                slack: /xox[baprs]-[a-zA-Z0-9]{10,}/g
+            };
+
+            for (const [key, pattern] of Object.entries(secretPatterns)) {
+                if (sanitizedValue.match(pattern)) {
+                    sanitizedValue = sanitizedValue.replace(pattern, `[SECRET_${key.toUpperCase()}_REDACTED]`);
+                    threats.push(`CRITICAL: ${key.toUpperCase()} API Key/Secret Detected`);
+                    foundSecret = true;
+                }
+            }
+        }
+
         // Custom Validators (Phase 1.1)
         if (this.config.custom && this.config.custom.length > 0) {
             for (const validator of this.config.custom) {
@@ -85,11 +105,18 @@ export class Privacy {
             }
         }
 
+        let riskScore = 0;
+        if (foundSecret) {
+            riskScore = 1.0; // Critical risk
+        } else if (threats.length > 0) {
+            riskScore = 0.6; // Medium risk (PII)
+        }
+
         return {
             safe: threats.length === 0, // It is technically "safe" now that it is redacted, but we flag the threat presence
             threats,
             sanitizedValue,
-            riskScore: threats.length > 0 ? 0.6 : 0
+            riskScore
         };
     }
 }

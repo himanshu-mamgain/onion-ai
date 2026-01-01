@@ -12,6 +12,47 @@ Think of it as **[Helmet](https://helmetjs.github.io/) for LLMs**.
 
 ---
 
+## New Features (v1.3.0)
+
+### 1. TOON (The Onion Object Notation)
+Convert your secured prompts into a structured, verifiable JSON format that separates content from metadata and threats.
+
+```typescript
+const onion = new OnionAI({ convertToToon: true });
+const safeJson = await onion.sanitize("My prompt");
+// Output:
+// {
+//   "version": "1.0",
+//   "type": "safe_prompt",
+//   "data": { "content": "My prompt", ... },
+//   ...
+// }
+```
+
+### 2. Circuit Breaker (Budget Control)
+Prevent runaway API costs with per-user token and cost limits using `CircuitBreaker`.
+
+```typescript
+import { CircuitBreaker } from 'onion-ai/dist/middleware/circuitBreaker';
+
+const breaker = new CircuitBreaker({
+    maxTokens: 5000, // Max tokens per window
+    maxCost: 0.05,   // Max cost ($) per window
+    windowMs: 60000  // 1 Minute window
+});
+
+try {
+    breaker.checkLimit("user_123", 2000); // Pass estimated tokens
+    // Proceed with API call
+} catch (err) {
+    if (err.name === 'BudgetExceededError') {
+       // Handle blocking
+    }
+}
+```
+
+---
+
 ## ⚡ Quick Start
 
 ### 1. Install
