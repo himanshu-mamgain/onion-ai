@@ -160,6 +160,38 @@ if (!scan.safe) {
 }
 ```
 
+## ⚙️ Advanced Customization
+
+### 4. Custom PII Validators (New!)
+Need to mask internal IDs (like `TRIP-1234`)? You can now add custom patterns.
+
+```typescript
+const onion = new OnionAI({
+  piiProtection: {
+    enabled: true,
+    custom: [
+      { 
+        name: "Trip ID", 
+        pattern: /TRIP-\d{4}/, 
+        replaceWith: "[TRIP_ID]" 
+      }
+    ]
+  }
+});
+```
+
+### 5. Bring Your Own Logger (BYOL)
+Integrate OnionAI with your existing observability tools (Datadog, Winston, etc.).
+
+```typescript
+const onion = new OnionAI({
+  logger: {
+    log: (msg, meta) => console.log(`[OnionInfo] ${msg}`, meta),
+    error: (msg, meta) => console.error(`[OnionAlert] ${msg}`, meta)
+  }
+});
+```
+
 ---
 
 ## 🔐 OWASP LLM Top 10 Compliance

@@ -40,7 +40,8 @@ export class OnionAI {
                 },
                 enhance: { enabled: config.enhance ?? false },
                 loggingMonitoringAndAudit: { logRequests: config.debug ?? false },
-                piiProtection: { enabled: config.piiSafe ?? false }
+                piiProtection: { enabled: config.piiSafe ?? false },
+                logger: config.logger
             };
         } else {
             finalConfig = config as OnionInputConfig;
@@ -81,6 +82,11 @@ export class OnionAI {
             }
             if (onWarning) {
                 onWarning(secLikelihood.threats);
+            }
+
+            // Custom Logger (Phase 1.2)
+            if (this.config.logger) {
+                this.config.logger.error("OnionAI Security Alert", { threats: secLikelihood.threats, riskScore: secLikelihood.riskScore });
             }
 
             // Strict Mode: Throw error if threats found

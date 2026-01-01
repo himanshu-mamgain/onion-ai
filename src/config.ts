@@ -139,7 +139,13 @@ export const OnionConfigSchema = z.object({
         maskPhone: z.boolean().default(true),
         maskCreditCard: z.boolean().default(true),
         maskSSN: z.boolean().default(true),
-        maskIP: z.boolean().default(true)
+        maskIP: z.boolean().default(true),
+        custom: z.array(z.object({
+            name: z.string(),
+            pattern: z.instanceof(RegExp).optional(),
+            validator: z.function().args(z.string()).returns(z.boolean()).optional(),
+            replaceWith: z.string().optional()
+        })).optional().default([])
     }).default({
         enabled: false,
         maskEmail: true,
@@ -147,7 +153,12 @@ export const OnionConfigSchema = z.object({
         maskCreditCard: true,
         maskSSN: true,
         maskIP: true
-    })
+    }),
+    // Plugins & Logger (Optional runtime objects)
+    logger: z.custom<{
+        log: (message: string, meta?: any) => void;
+        error: (message: string, meta?: any) => void;
+    }>((val) => typeof val === 'object' && val !== null && 'log' in val).optional()
 });
 
 export type OnionConfig = z.infer<typeof OnionConfigSchema>;
@@ -160,6 +171,10 @@ export interface SimpleOnionConfig {
     piiSafe?: boolean;
     debug?: boolean;
     strict?: boolean; // If true, throws an error on high-severity threats
+    logger?: {
+        log: (message: string, meta?: any) => void;
+        error: (message: string, meta?: any) => void;
+    };
     onWarning?: (threats: string[]) => void;
 }
 

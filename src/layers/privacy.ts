@@ -62,6 +62,29 @@ export class Privacy {
             }
         }
 
+        // Custom Validators (Phase 1.1)
+        if (this.config.custom && this.config.custom.length > 0) {
+            for (const validator of this.config.custom) {
+                // Regex Pattern Strategy
+                if (validator.pattern) {
+                    if (sanitizedValue.match(validator.pattern)) {
+                        const replacement = validator.replaceWith || `[${validator.name.toUpperCase()}_REDACTED]`;
+                        sanitizedValue = sanitizedValue.replace(validator.pattern, replacement);
+                        threats.push(`PII Detected: Custom (${validator.name})`);
+                    }
+                }
+                // Function Validator Strategy (Simple Check)
+                else if (validator.validator) {
+                    // Logic for validator function is harder for replacement unless it returns indices.
+                    // For now, we assume it just FLAGS it, unless we scan word by word?
+                    // Let's keep it simple: if it returns true, we flag it. Modification is hard without location.
+                    if (validator.validator(input)) {
+                        threats.push(`PII Detected: Custom (${validator.name}) - Detected by Validator`);
+                    }
+                }
+            }
+        }
+
         return {
             safe: threats.length === 0, // It is technically "safe" now that it is redacted, but we flag the threat presence
             threats,
