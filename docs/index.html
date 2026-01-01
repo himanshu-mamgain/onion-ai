@@ -161,6 +161,39 @@ console.log(safe);
                     </table>
                 </div>
 
+                <!-- TOON -->
+                <div class="card ref-card">
+                    <div class="card-header">
+                        <div class="icon-box"><i data-lucide="file-json"></i></div>
+                        <div>
+                            <h3>TOON</h3>
+                            <span class="tag">Safe Format</span>
+                        </div>
+                    </div>
+                    <p>Encapsulates output in verifiable JSON format.</p>
+                    <table class="ref-table">
+                        <tr><th>Property</th><th>Default</th><th>Description</th></tr>
+                        <tr><td><code>toon</code></td><td>false</td><td>Converts output to TOON schema.</td></tr>
+                    </table>
+                </div>
+
+                <!-- Circuit Breaker -->
+                <div class="card ref-card">
+                    <div class="card-header">
+                        <div class="icon-box"><i data-lucide="zap-off"></i></div>
+                        <div>
+                            <h3>CircuitBreaker</h3>
+                            <span class="tag">Middleware</span>
+                        </div>
+                    </div>
+                    <p>Budget and token control per user.</p>
+                    <table class="ref-table">
+                        <tr><th>Property</th><th>Default</th><th>Description</th></tr>
+                        <tr><td><code>maxTokens</code></td><td>5000</td><td>Token limit per window.</td></tr>
+                        <tr><td><code>maxCost</code></td><td>$0.02</td><td>Dollar cost limit per window.</td></tr>
+                    </table>
+                </div>
+
             </div>
         </div>
     </section>
