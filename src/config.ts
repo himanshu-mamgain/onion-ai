@@ -193,7 +193,7 @@ export interface SimpleOnionConfig {
         metadata?: any;
     }>;
     onWarning?: (threats: string[]) => void;
-    convertToToon?: boolean;
+    toon?: boolean;
 }
 
 export interface SecurityResult {

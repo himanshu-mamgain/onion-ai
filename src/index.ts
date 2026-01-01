@@ -62,7 +62,7 @@ export class OnionAI {
     }
 
     private isSimpleConfig(config: any): config is SimpleOnionConfig {
-        return 'dbSafe' in config || 'enhance' in config || 'preventPromptInjection' in config || 'onWarning' in config || 'piiSafe' in config || 'convertToToon' in config;
+        return 'dbSafe' in config || 'enhance' in config || 'preventPromptInjection' in config || 'onWarning' in config || 'piiSafe' in config || 'toon' in config;
     }
 
     /**
@@ -102,7 +102,7 @@ export class OnionAI {
         let output = this.enhancer.enhance(secLikelihood.output);
 
         // 3. TOON Conversion (if enabled)
-        if (this.simpleConfig?.convertToToon) {
+        if (this.simpleConfig?.toon) {
             output = ToonConverter.convert(output, secLikelihood.riskScore, secLikelihood.threats);
         }
 

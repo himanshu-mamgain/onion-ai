@@ -18,7 +18,7 @@ Think of it as **[Helmet](https://helmetjs.github.io/) for LLMs**.
 Convert your secured prompts into a structured, verifiable JSON format that separates content from metadata and threats.
 
 ```typescript
-const onion = new OnionAI({ convertToToon: true });
+const onion = new OnionAI({ toon: true });
 const safeJson = await onion.sanitize("My prompt");
 // Output:
 // {
