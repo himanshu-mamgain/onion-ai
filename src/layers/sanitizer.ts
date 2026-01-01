@@ -45,7 +45,8 @@ export class Sanitizer {
         return {
             safe: true, // Sanitization makes it "safe" by modification
             threats,
-            sanitizedValue
+            sanitizedValue,
+            riskScore: threats.length > 0 ? 0.1 : 0
         };
     }
 }

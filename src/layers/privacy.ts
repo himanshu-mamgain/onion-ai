@@ -4,7 +4,7 @@ export class Privacy {
     constructor(private config: OnionConfig['piiProtection']) { }
 
     anonymize(input: string): SecurityResult {
-        if (!this.config.enabled) return { safe: true, threats: [] };
+        if (!this.config.enabled) return { safe: true, threats: [], riskScore: 0 };
 
         let sanitizedValue = input;
         const threats: string[] = [];
@@ -65,7 +65,8 @@ export class Privacy {
         return {
             safe: threats.length === 0, // It is technically "safe" now that it is redacted, but we flag the threat presence
             threats,
-            sanitizedValue
+            sanitizedValue,
+            riskScore: threats.length > 0 ? 0.6 : 0
         };
     }
 }

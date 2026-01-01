@@ -166,6 +166,7 @@ export interface SimpleOnionConfig {
 export interface SecurityResult {
     safe: boolean;
     threats: string[];
+    riskScore: number; // 0.0 to 1.0
     sanitizedValue?: string;
     metadata?: any;
 }

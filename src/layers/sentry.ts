@@ -15,12 +15,13 @@ export class Sentry {
         if (this.requestHistory.length >= this.config.maxRequestsPerMinute) {
             return {
                 safe: false,
-                threats: ["Rate limit exceeded (Max requests per minute)"]
+                threats: ["Rate limit exceeded (Max requests per minute)"],
+                riskScore: 1.0
             };
         }
 
         this.requestHistory.push({ timestamp: now });
-        return { safe: true, threats: [] };
+        return { safe: true, threats: [], riskScore: 0 };
     }
 
     checkTokenCount(prompt: string): SecurityResult {
@@ -35,7 +36,8 @@ export class Sentry {
         return {
             safe: threats.length === 0,
             threats,
-            metadata: { estimatedTokens }
+            metadata: { estimatedTokens },
+            riskScore: threats.length > 0 ? 0.3 : 0
         };
     }
 }

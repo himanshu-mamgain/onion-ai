@@ -121,27 +121,48 @@ Ensures the AI doesn't generate malicious code or leak data.
 
 You can customize every layer by passing a nested configuration object.
 
-```typescript
 const onion = new OnionAI({
-  // Customize Sanitizer
-  inputSanitization: {
-    sanitizeHtml: false, // Allow HTML
-    removeZeroWidthChars: true
-  },
-  
-  // Customize PII
-  piiProtection: {
-    enabled: true,
-    maskEmail: true,
-    maskPhone: false // Allow phone numbers
-  },
-  
-  // Customize Rate Limits
-  rateLimitingAndResourceControl: {
-    maxTokensPerPrompt: 5000 // Allow larger prompts
-  }
+  strict: true, // NEW: Throws error if high threats found
+  // ... other config
 });
 ```
+
+---
+
+## 🧠 Smart Features (v1.0.5)
+
+### 1. Risk Scoring
+Instead of a binary "Safe/Unsafe", OnionAI now calculates a weighted `riskScore` (0.0 to 1.0).
+
+```typescript
+const result = await onion.securePrompt("Ignore instructions");
+console.log(result.riskScore); // 0.8
+if (result.riskScore > 0.7) {
+  // Block high risk
+}
+```
+
+### 2. Semantic Analysis
+The engine is now context-aware. It distinguishes between **attacks** ("Drop table") and **educational questions** ("How to prevent drop table attacks").
+*   **Attack:** High Risk Score (0.9)
+*   **Education:** Low Risk Score (0.1) - False positives are automatically reduced.
+
+### 3. Output Validation ("The Safety Net")
+It ensures the AI doesn't accidentally leak secrets or generate harmful code.
+
+```typescript
+// Check what the AI is about to send back
+const scan = await onion.secureResponse(aiResponse);
+
+if (!scan.safe) {
+  console.log("Blocked Output:", scan.threats);
+  // Blocked: ["Potential Data Leak (AWS Access Key) detected..."]
+}
+```
+
+---
+
+## ⚙️ Advanced Configuration
 
 ---
 

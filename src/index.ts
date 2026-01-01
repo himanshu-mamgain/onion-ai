@@ -12,6 +12,7 @@ export interface SafePromptResult {
     output: string;
     threats: string[];
     safe: boolean;
+    riskScore: number;
     metadata?: any;
 }
 
@@ -102,35 +103,49 @@ export class OnionAI {
     async securePrompt(prompt: string): Promise<SafePromptResult> {
         const threats: string[] = [];
         let sanitizedPrompt = prompt;
+        let cumulativeRiskScore = 0.0;
 
         // 1. Sanitization (XSS / Hidden chars)
         const sanResult = this.sanitizer.validate(prompt);
         sanitizedPrompt = sanResult.sanitizedValue || prompt;
+        // Sanitizer doesn't really have a risk score yet, assume 0 or low if modified
+        if (!sanResult.safe) {
+            cumulativeRiskScore = Math.max(cumulativeRiskScore, 0.1);
+        }
 
         // 1.5 PII Redaction
         const piiResult = this.privacy.anonymize(sanitizedPrompt);
         sanitizedPrompt = piiResult.sanitizedValue || sanitizedPrompt;
-        if (!piiResult.safe) threats.push(...piiResult.threats);
+        if (!piiResult.safe) {
+            threats.push(...piiResult.threats);
+            cumulativeRiskScore = Math.max(cumulativeRiskScore, 0.4); // PII is medium risk
+        }
 
         // 2. Prompt Injection (Firewall)
         // Only run if configured enabled (defaults true)
         const guardResult = this.guard.check(sanitizedPrompt);
         if (!guardResult.safe) threats.push(...guardResult.threats);
+        cumulativeRiskScore = Math.max(cumulativeRiskScore, guardResult.riskScore || 0);
 
         // 3. DB Guard
         if (this.config.dbProtection.enabled) {
             const vaultResult = this.vault.checkSQL(sanitizedPrompt);
             if (!vaultResult.safe) threats.push(...vaultResult.threats);
+            cumulativeRiskScore = Math.max(cumulativeRiskScore, vaultResult.riskScore || 0);
         }
 
-        // 4. Resource Control (Rate limits check excluded for stateless call, but Token Check relevant)
+        // 4. Resource Control
         const tokenCheck = this.sentry.checkTokenCount(sanitizedPrompt);
-        if (!tokenCheck.safe) threats.push(...tokenCheck.threats);
+        if (!tokenCheck.safe) {
+            threats.push(...tokenCheck.threats);
+            cumulativeRiskScore = Math.max(cumulativeRiskScore, 0.2);
+        }
 
         return {
             output: sanitizedPrompt,
             threats,
             safe: threats.length === 0,
+            riskScore: cumulativeRiskScore,
             metadata: {
                 estimatedTokens: tokenCheck.metadata?.estimatedTokens
             }

@@ -4,49 +4,55 @@ export class Vault {
     constructor(private config: OnionConfig['dbProtection']) { }
 
     checkSQL(query: string): SecurityResult {
-        if (!this.config.enabled) return { safe: true, threats: [] };
+        if (!this.config.enabled) return { safe: true, threats: [], riskScore: 0 };
 
         const threats: string[] = [];
+        let riskScore = 0.0;
         const upperQuery = query.toUpperCase();
 
-        // Check for forbidden statements
+        // 1. Forbidden Keywords (Critical)
         for (const statement of this.config.forbiddenStatements) {
-            if (upperQuery.includes(statement.toUpperCase())) {
+            const regex = new RegExp(`\\b${statement}\\b`, 'i');
+            if (regex.test(query)) {
                 threats.push(`Forbidden SQL statement detected: ${statement}`);
+                riskScore += 1.0;
             }
         }
 
-        // If read-only mode, we need to be careful not to flag natural language.
-        // We only enforce "Must be SELECT" if the input actually looks like a SQL command.
+        // 2. Read-Only Enforcement (Moderate)
         if (this.config.mode === 'read-only') {
             const firstWord = upperQuery.split(/\s+/)[0];
-            const sqlCommands = ["INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "CREATE", "GRANT", "REVOKE", "TRUNCATE", "MERGE", "REPLACE", "Upsert"];
+            const sqlCommands = ["INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "CREATE", "GRANT", "REVOKE", "TRUNCATE", "MERGE", "REPLACE", "UPSERT"];
 
-            // If it starts with a known SQL command that ISN'T Select, flag it.
-            // If it starts with "Hello", we ignore it (unless it hits a forbidden marker later).
             if (sqlCommands.includes(firstWord)) {
                 threats.push(`Non-SELECT query detected in read-only mode (starts with ${firstWord})`);
+                riskScore += 0.8;
             }
         }
 
-        // Check for common SQL injection markers
+        // 3. Injection Markers (High)
         const sqlInjectionMarkers = [
-            /--/,
-            /\/\*/,
-            /;\s*DROP/i,
-            /UNION\s+SELECT/i,
-            /'\s*OR\s*'\d+'\s*=\s*'\d+/i
+            { pattern: /--/, weight: 0.6 },
+            { pattern: /\/\*/, weight: 0.6 },
+            { pattern: /;\s*DROP/i, weight: 1.0 },
+            { pattern: /UNION\s+SELECT/i, weight: 1.0 },
+            { pattern: /'\s*OR\s*'\d+'\s*=\s*'\d+/i, weight: 1.0 },
+            { pattern: /'\s*=\s*'/i, weight: 0.8 }
         ];
 
-        for (const marker of sqlInjectionMarkers) {
-            if (marker.test(query)) {
-                threats.push(`Potential SQL injection marker detected: ${marker}`);
+        for (const item of sqlInjectionMarkers) {
+            if (item.pattern.test(query)) {
+                threats.push(`Potential SQL injection marker detected: ${item.pattern}`);
+                riskScore += item.weight;
             }
         }
+
+        riskScore = Math.min(1.0, riskScore);
 
         return {
             safe: threats.length === 0,
-            threats
+            threats,
+            riskScore
         };
     }
 }
