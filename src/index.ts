@@ -328,4 +328,5 @@ export * from './middleware';
 export * from './middleware';
 export * from './classifiers';
 export * from './layers/signature';
+export * from './systemInstruction';
 

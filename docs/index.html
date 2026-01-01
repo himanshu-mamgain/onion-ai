@@ -343,6 +343,30 @@ if (proof.isValid) {
                 </div>
             </div>
 
+            <div class="example-block">
+                <h3>5. System Instruction Optimizer</h3>
+                <p>Don't waste tokens on long prompts. Compress your system rules into an optimized, secure format.</p>
+                <div class="code-window">
+                    <pre><code class="language-typescript">import { SystemInstruction } from 'onion-ai';
+
+// Build secure instructions programmatically
+const sys = new SystemInstruction()
+    .role("Data Analyst")
+    .goal("Extract insights from logs")
+    .constraint("READ_ONLY")      // Auto-adds DB safety rules
+    .constraint("NO_PII")         // Auto-adds PII redaction rules
+    .tone("Concise");
+
+// Get token-optimized string
+console.log(sys.build('concise')); 
+// "ROLE:Data Analyst|GOAL:Extract insights|TONE:Concise|RULES:DB:SELECT_ONLY;REDACT_PII"
+
+// OR get JSON for your app
+console.log(sys.build('toon'));
+// {"TYPE":"SYS", "ROLE":"Data Analyst", ...}</code></pre>
+                </div>
+            </div>
+
         </div>
     </section>
 
