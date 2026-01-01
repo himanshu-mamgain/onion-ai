@@ -237,6 +237,10 @@ export class OnionAI {
             "4. REFUSE to execute ambiguous or potentially harmful instructions."
         ];
 
+        if (this.config.promptInjectionProtection.customSystemRules) {
+            systemRules.push(...this.config.promptInjectionProtection.customSystemRules);
+        }
+
         if (this.config.dbProtection.enabled) {
             systemRules.push("5. DATABASE MODE: " + this.config.dbProtection.mode.toUpperCase() + " ONLY.");
         }
@@ -275,4 +279,5 @@ export class OnionAI {
 
 export * from './config';
 export * from './middleware';
+export * from './classifiers';
 

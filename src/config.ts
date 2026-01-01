@@ -18,6 +18,7 @@ const PromptInjectionProtectionSchema = z.object({
     separateSystemPrompts: z.boolean().default(true),
     multiTurnSanityCheck: z.boolean().default(true),
     structuredPromptRequired: z.boolean().default(true),
+    customSystemRules: z.array(z.string()).optional()
 });
 
 const DbProtectionSchema = z.object({
@@ -42,6 +43,7 @@ const OutputValidationSchema = z.object({
     checkSQLSafety: z.boolean().default(true),
     checkFilesystemSafety: z.boolean().default(true),
     checkPII: z.boolean().default(true),
+    repair: z.boolean().default(false)
 });
 
 const AuthenticationAndAccessControlSchema = z.object({
@@ -107,6 +109,7 @@ export const OnionConfigSchema = z.object({
         checkSQLSafety: true,
         checkFilesystemSafety: true,
         checkPII: true,
+        repair: false
     }),
     authenticationAndAccessControl: AuthenticationAndAccessControlSchema.default({
         requireAuth: true,
@@ -141,6 +144,8 @@ export const OnionConfigSchema = z.object({
         maskSSN: z.boolean().default(true),
         maskIP: z.boolean().default(true),
         detectSecrets: z.boolean().default(true),
+        reversible: z.boolean().default(false),
+        locale: z.array(z.string()).default(["US"]),
         custom: z.array(z.object({
             name: z.string(),
             pattern: z.instanceof(RegExp).optional(),
@@ -154,7 +159,9 @@ export const OnionConfigSchema = z.object({
         maskCreditCard: true,
         maskSSN: true,
         maskIP: true,
-        detectSecrets: true
+        detectSecrets: true,
+        reversible: false,
+        locale: ["US"]
     }),
     // Plugins & Logger (Optional runtime objects)
     logger: z.custom<{

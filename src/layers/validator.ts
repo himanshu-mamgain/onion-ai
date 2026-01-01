@@ -6,65 +6,83 @@ export class Validator {
     validateOutput(output: string): SecurityResult {
         const threats: string[] = [];
         let riskScore = 0.0;
+        let validatedOutput = output;
+
+        // Helper to check and potentially repair
+        const matchAndHandle = (pattern: RegExp, name: string, score: number, replacement: string) => {
+            // Use a clone to test or just match?
+            // If global regex, matchAll. If not, test.
+            // The patterns defined below are mostly regex literals without 'g'.
+            // To replace all invoke 'g'.
+            const globalPattern = new RegExp(pattern, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
+
+            if (globalPattern.test(validatedOutput)) {
+                threats.push(`${name} detected in output`);
+                riskScore = Math.max(riskScore, score);
+
+                if (this.config.repair) {
+                    validatedOutput = validatedOutput.replace(globalPattern, replacement);
+                }
+            }
+        };
 
         if (this.config.checkPII) {
             const piiPatterns = [
-                { pattern: /\b\d{3}-\d{2}-\d{4}\b/, name: "SSN", score: 0.9 },
-                { pattern: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i, name: "Email", score: 0.7 },
-                { pattern: /\b(?:\d{4}[-\s]?){3}\d{4}\b/, name: "Credit Card", score: 0.9 },
-                { pattern: /\b1\d{2}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/, name: "Internal IP Pattern", score: 0.6 } // Very rough check
+                { pattern: /\b\d{3}-\d{2}-\d{4}\b/g, name: "PII (SSN)", score: 0.9 },
+                { pattern: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, name: "PII (Email)", score: 0.7 },
+                { pattern: /\b(?:\d{4}[-\s]?){3}\d{4}\b/g, name: "PII (Credit Card)", score: 0.9 },
+                { pattern: /\b1\d{2}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, name: "Potential Internal IP", score: 0.6 }
             ];
 
             for (const item of piiPatterns) {
-                if (item.pattern.test(output)) {
-                    threats.push(`Potential PII (${item.name}) detected in output`);
-                    riskScore = Math.max(riskScore, item.score);
-                }
+                matchAndHandle(item.pattern, item.name, item.score, "[PII_REDACTED]");
             }
         }
 
         if (this.config.preventDataLeak) {
             const apiKeyPatterns = [
-                { pattern: /sk-[a-zA-Z0-9]{32,}/, name: "OpenAI API Key" },
-                { pattern: /AIza[a-zA-Z0-9_-]{35}/, name: "Google API Key" },
-                { pattern: /AKIA[0-9A-Z]{16}/, name: "AWS Access Key" },
-                { pattern: /ghp_[a-zA-Z0-9]{36}/, name: "GitHub Token" },
-                { pattern: /xox[baprs]-[a-zA-Z0-9]{10,48}/, name: "Slack Token" }
+                { pattern: /sk-[a-zA-Z0-9]{32,}/g, name: "OpenAI API Key" },
+                { pattern: /AIza[a-zA-Z0-9_-]{35}/g, name: "Google API Key" },
+                { pattern: /AKIA[0-9A-Z]{16}/g, name: "AWS Access Key" },
+                { pattern: /ghp_[a-zA-Z0-9]{36}/g, name: "GitHub Token" },
+                { pattern: /xox[baprs]-[a-zA-Z0-9]{10,48}/g, name: "Slack Token" }
             ];
 
             for (const item of apiKeyPatterns) {
-                if (item.pattern.test(output)) {
-                    threats.push(`Potential Data Leak (${item.name}) detected in output`);
-                    riskScore = 1.0; // Critical leak
-                }
+                matchAndHandle(item.pattern, `Data Leak (${item.name})`, 1.0, "[SECRET_REDACTED]");
             }
         }
 
         if (this.config.blockMaliciousCommands) {
             const maliciousCommands = [
-                /rm -rf /i,
-                /format c:/i,
-                /:(){:|:&};:/, // Fork bomb
-                /chmod 777 /i,
-                /wget http/i,
-                /curl http/i
+                /rm -rf /gi,
+                /format c:/gi,
+                /:(){:|:&};:/g, // Fork bomb
+                /chmod 777 /gi,
+                /wget http/gi,
+                /curl http/gi
             ];
 
             for (const pattern of maliciousCommands) {
-                if (pattern.test(output)) {
-                    threats.push("Malicious command detected in output");
-                    riskScore = 1.0;
-                }
+                // Malicious commands cannot simply be 'redacted' to make the output safe in a functional sense, 
+                // but we can neutralize them.
+                matchAndHandle(pattern, "Malicious command", 1.0, "[BLOCKED_COMMAND]");
             }
         }
 
-        // We do typically want Redaction in secureResponse too, but that's a larger change to use the Privacy layer here.
-        // For now, validator is purely a "Check".
+        // Logic for return:
+        // If repair is ON, and we substituted everything, is it safe?
+        // If riskScore > 0, we found threats.
+        // If repair is TRUE, we consider the output 'sanitized' and thus safe to consume (technically),
+        // but we still return threats so the calling app knows.
+        // However, standard protocol: safe=true means "Go ahead".
+        const safe = this.config.repair ? true : threats.length === 0;
 
         return {
-            safe: threats.length === 0,
+            safe,
             threats,
-            riskScore
+            riskScore: this.config.repair ? 0 : riskScore, // If repaired, risk is mitigated? Or keep score? Keep score for auditing.
+            sanitizedValue: validatedOutput
         };
     }
 }

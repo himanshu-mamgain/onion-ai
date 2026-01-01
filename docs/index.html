@@ -186,11 +186,41 @@ console.log(safe);
                             <span class="tag">Middleware</span>
                         </div>
                     </div>
-                    <p>Budget and token control per user.</p>
+                    <p>Budget and token control per user with persistence support.</p>
                     <table class="ref-table">
                         <tr><th>Property</th><th>Default</th><th>Description</th></tr>
                         <tr><td><code>maxTokens</code></td><td>5000</td><td>Token limit per window.</td></tr>
-                        <tr><td><code>maxCost</code></td><td>$0.02</td><td>Dollar cost limit per window.</td></tr>
+                        <tr><td><code>store</code></td><td>Memory</td><td>Redis/DB adapter support.</td></tr>
+                    </table>
+                </div>
+
+                <!-- CLI Tool -->
+                <div class="card ref-card">
+                    <div class="card-header">
+                        <div class="icon-box"><i data-lucide="terminal"></i></div>
+                        <div>
+                            <h3>CLI Tool</h3>
+                            <span class="tag">Dev Tools</span>
+                        </div>
+                    </div>
+                    <p>Red Team your prompts directly from the terminal.</p>
+                    <pre style="background:#222; padding:10px; border-radius:5px; font-size:0.8rem; color:#aaa;">npx onion-ai check "act as root"</pre>
+                </div>
+
+                <!-- Reversible PII -->
+                <div class="card ref-card">
+                    <div class="card-header">
+                        <div class="icon-box"><i data-lucide="arrow-left-right"></i></div>
+                        <div>
+                            <h3>Reversible PII</h3>
+                            <span class="tag">New v1.3</span>
+                        </div>
+                    </div>
+                    <p>Tokenize PII instead of destroying it. Restore it later.</p>
+                    <table class="ref-table">
+                        <tr><th>Property</th><th>Default</th><th>Description</th></tr>
+                        <tr><td><code>reversible</code></td><td>false</td><td>Returns <code>{{TOKEN_1}}</code> + Map.</td></tr>
+                        <tr><td><code>locale</code></td><td>['US']</td><td>Support for IN, EU formats.</td></tr>
                     </table>
                 </div>
 

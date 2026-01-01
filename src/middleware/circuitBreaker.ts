@@ -7,6 +7,37 @@ export interface BudgetConfig {
     costPer1kTokens?: number; // Default 0.002
 }
 
+export interface UserUsage {
+    tokens: number;
+    cost: number;
+    lastReset: number;
+}
+
+export interface BudgetStore {
+    get(userId: string): Promise<UserUsage | undefined> | UserUsage | undefined;
+    set(userId: string, usage: UserUsage): Promise<void> | void;
+}
+
+class MemoryBudgetStore implements BudgetStore {
+    private cache: LRUCache<string, UserUsage>;
+
+    constructor(ttl: number) {
+        this.cache = new LRUCache<string, UserUsage>({
+            max: 1000,
+            ttl: ttl,
+            ttlAutopurge: true
+        });
+    }
+
+    get(userId: string): UserUsage | undefined {
+        return this.cache.get(userId);
+    }
+
+    set(userId: string, usage: UserUsage): void {
+        this.cache.set(userId, usage);
+    }
+}
+
 export class BudgetExceededError extends Error {
     constructor(message: string) {
         super(message);
@@ -14,43 +45,29 @@ export class BudgetExceededError extends Error {
     }
 }
 
-interface UserUsage {
-    tokens: number;
-    cost: number;
-    lastReset: number;
-}
-
 export class CircuitBreaker {
-    private cache: LRUCache<string, UserUsage>;
+    private store: BudgetStore;
     private config: BudgetConfig;
     private windowMs: number;
     private costPer1kTokens: number;
 
-    constructor(config: BudgetConfig) {
+    constructor(config: BudgetConfig, store?: BudgetStore) {
         this.config = config;
         this.windowMs = config.windowMs || 60000;
         this.costPer1kTokens = config.costPer1kTokens || 0.002;
 
-        // LRU Cache for user tracking
-        this.cache = new LRUCache<string, UserUsage>({
-            max: 1000, // Track up to 1000 users active
-            ttl: this.windowMs, // Expire after window
-            ttlAutopurge: true
-        });
+        this.store = store || new MemoryBudgetStore(this.windowMs);
     }
 
-    checkLimit(userId: string, estimatedTokens: number): void {
-        let usage = this.cache.get(userId);
+    async checkLimit(userId: string, estimatedTokens: number): Promise<void> {
+        let usage = await this.store.get(userId);
         const now = Date.now();
 
-        // Initialize if new or expired (though ttl handles expiry, we might need a reset logic if lru-cache keeps entry but we want rigorous window)
-        // With ttlAutopurge in lru-cache v7+, getting an expired item returns undefined.
         if (!usage) {
             usage = { tokens: 0, cost: 0, lastReset: now };
         }
 
-        // Sliding window notion: If we strictly want "in a 60-second window", LRU TTL is approximation because it resets on 'set' if updateAgeOnGet/default behavior varies. 
-        // We'll stick to a simple bucket reset: if (now - lastReset > window) reset.
+        // Sliding window / Reset check
         if (now - usage.lastReset > this.windowMs) {
             usage = { tokens: 0, cost: 0, lastReset: now };
         }
@@ -69,6 +86,7 @@ export class CircuitBreaker {
         // Update Usage
         usage.tokens += estimatedTokens;
         usage.cost += estimatedCost;
-        this.cache.set(userId, usage);
+
+        await this.store.set(userId, usage);
     }
 }
