@@ -8,6 +8,7 @@ Think of it as **[Helmet](https://helmetjs.github.io/) for LLMs**.
 
 [![npm version](https://img.shields.io/npm/v/onion-ai.svg?style=flat-square)](https://www.npmjs.com/package/onion-ai)
 [![license](https://img.shields.io/npm/l/onion-ai.svg?style=flat-square)](https://github.com/himanshu-mamgain/onion-ai/blob/main/LICENSE)
+[![Documentation](https://img.shields.io/badge/docs-onion--ai-8b5cf6?style=flat-square&logo=github)](https://himanshu-mamgain.github.io/onion-ai/)
 
 ---
 
