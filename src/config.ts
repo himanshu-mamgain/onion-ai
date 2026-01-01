@@ -159,6 +159,7 @@ export interface SimpleOnionConfig {
     enhance?: boolean;
     piiSafe?: boolean;
     debug?: boolean;
+    strict?: boolean; // If true, throws an error on high-severity threats
     onWarning?: (threats: string[]) => void;
 }
 

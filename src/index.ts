@@ -81,6 +81,11 @@ export class OnionAI {
             if (onWarning) {
                 onWarning(secLikelihood.threats);
             }
+
+            // Strict Mode: Throw error if threats found
+            if (this.simpleConfig?.strict) {
+                throw new Error(`OnionAI Security Violation: ${secLikelihood.threats.join(", ")}`);
+            }
         }
 
         // 2. Enhance (if enabled)

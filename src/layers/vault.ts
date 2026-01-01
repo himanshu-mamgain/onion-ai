@@ -16,11 +16,16 @@ export class Vault {
             }
         }
 
-        // If read-only mode, only SELECT is usually allowed
+        // If read-only mode, we need to be careful not to flag natural language.
+        // We only enforce "Must be SELECT" if the input actually looks like a SQL command.
         if (this.config.mode === 'read-only') {
-            const isSelect = upperQuery.trim().startsWith('SELECT');
-            if (!isSelect && query.trim().length > 0) {
-                threats.push("Non-SELECT query detected in read-only mode");
+            const firstWord = upperQuery.split(/\s+/)[0];
+            const sqlCommands = ["INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "CREATE", "GRANT", "REVOKE", "TRUNCATE", "MERGE", "REPLACE", "Upsert"];
+
+            // If it starts with a known SQL command that ISN'T Select, flag it.
+            // If it starts with "Hello", we ignore it (unless it hits a forbidden marker later).
+            if (sqlCommands.includes(firstWord)) {
+                threats.push(`Non-SELECT query detected in read-only mode (starts with ${firstWord})`);
             }
         }
 
