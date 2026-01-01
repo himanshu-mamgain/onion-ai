@@ -162,6 +162,20 @@ if (!scan.safe) {
 
 ---
 
+## 🔐 OWASP LLM Top 10 Compliance
+Onion AI is designed to mitigate specific risks outlined in the [OWASP Top 10 for Large Language Model Applications](https://owasp.org/www-project-top-10-for-large-language-model-applications/).
+
+| OWASP Vulnerability | Onion AI Defense Layer | Mechanism |
+| :--- | :--- | :--- |
+| **LLM01: Prompt Injection** | **Guard Layer** | Blocks "Ignore Previous Instructions" & Jailbreak patterns. |
+| **LLM02: Sensitive Info Disclosure** | **Privacy Layer** | Redacts PII (SSN, Email, Phone) from inputs. |
+| **LLM02: Sensitive Info Disclosure** | **Validator Layer** | Scans output for accidental PII or Key leakage. |
+| **LLM04: Model Denial of Service** | **Sentry Layer** | Enforces Token limits & Rate limiting logic. |
+| **LLM06: Excessive Agency** | **Vault Layer** | Prevents destructive actions (DROP, DELETE) in SQL agents. |
+| **LLM02: Insecure Output Handling** | **Sanitizer Layer** | Strips XSS vectors (Scripts, HTML) from inputs. |
+
+---
+
 ## ⚙️ Advanced Configuration
 
 ---
