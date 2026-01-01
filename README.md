@@ -160,6 +160,46 @@ if (!scan.safe) {
 }
 ```
 
+## 🛡️ Critical Security (v1.2+)
+
+### System Rule Enforcement & Session Protection
+For critical applications, use `onion.protect()`. This method specifically adds **Immutable System Rules** to your prompt and tracks **User Sessions** to detect brute-force attacks.
+
+```typescript
+const sessionId = "user_123_session"; // Unique session ID for the user
+const result = await onion.protect(userPrompt, sessionId);
+
+if (!result.safe) {
+   console.error("Blocked:", result.threats);
+   return;
+}
+
+// Result now contains 'systemRules' to PREPEND to your LLM context
+const messages = [
+    { role: "system", content: result.systemRules.join("\n") }, 
+    { role: "user", content: result.securePrompt } // Sanitized Input
+];
+
+// Call LLM...
+```
+
+### Semantic Intent Classification (AI vs AI)
+To prevent "Jailbreak via Paraphrasing", you can plug in an LLM-based intent classifier.
+
+```typescript
+const onion = new OnionAI({
+  intentClassifier: async (prompt) => {
+    // Call a small, fast model (e.g. gpt-4o-mini, haiku, or local llama3)
+    const analysis = await myLLM.classify(prompt); 
+    // Return format:
+    return {
+      intent: analysis.intent, // "SAFE", "INSTRUCTION_OVERRIDE", etc.
+      confidence: analysis.score
+    };
+  }
+});
+```
+
 ## ⚙️ Advanced Customization
 
 ### 4. Custom PII Validators (New!)
