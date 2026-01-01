@@ -12,7 +12,7 @@ Think of it as **[Helmet](https://helmetjs.github.io/) for LLMs**.
 
 ---
 
-## New Features (v1.3.0)
+## New Features
 
 ### 1. TOON (The Onion Object Notation)
 Convert your secured prompts into a structured, verifiable JSON format that separates content from metadata and threats.
@@ -354,11 +354,7 @@ Onion AI is designed to mitigate specific risks outlined in the [OWASP Top 10 fo
 | **LLM06: Excessive Agency** | **Vault Layer** | Prevents destructive actions (DROP, DELETE) in SQL agents. |
 | **LLM02: Insecure Output Handling** | **Sanitizer Layer** | Strips XSS vectors (Scripts, HTML) from inputs. |
 
----
 
-## ⚙️ Advanced Configuration
-
----
 
 ## 🔌 Middleware Integration
 
