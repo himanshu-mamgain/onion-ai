@@ -1,7 +1,14 @@
 src/
 examples/
-tsconfig.json
-.gitignore
+threat-samples/
+docs/
+tests/
+.github/
+.vscode/
 .git/
 node_modules/
+tsconfig.json
+.gitignore
+jest.config.js
 *.spec.ts
+*.test.ts

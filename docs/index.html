@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onion AI - Security Middleware for LLMs</title>
+    <meta name="description" content="Onion AI is the Helmet.js for Large Language Models. Layered security against Prompt Injection, PII leakage, and SQL injection.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="#" class="logo">
+                <span class="icon">🧅</span> Onion AI
+            </a>
+            <ul class="nav-links">
+                <li><a href="#quickstart">Quick Start</a></li>
+                <li><a href="#reference">Reference</a></li>
+                <li><a href="https://github.com/himanshu-mamgain/onion-ai" target="_blank" class="btn-github"><i data-lucide="github"></i> GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="container hero-content">
+            <div class="hero-text">
+                <div class="badge">npm install onion-ai</div>
+                <h1>Middleware for <br><span class="gradient-text">LLM Security</span></h1>
+                <p class="hero-sub">The "Helmet.js" for AI. Onion AI sets 9 internal security layers to protect your model from jailbreaks, PII leakage, and malicious inputs.</p>
+                <div class="hero-cta">
+                    <a href="#quickstart" class="btn btn-primary">Get Started</a>
+                    <a href="#reference" class="btn btn-secondary">API Reference</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="onion-layers">
+                    <div class="layer l1"></div>
+                    <div class="layer l2"></div>
+                    <div class="layer l3"></div>
+                    <div class="layer l4"></div>
+                    <div class="core">AI</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="quickstart" class="code-section">
+        <div class="container">
+            <h2 class="section-title">Quick Start</h2>
+            
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                    <div class="tab">usage.ts</div>
+                </div>
+                <div class="terminal-body code-block">
+<pre><code>import { OnionAI } from 'onion-ai';
+
+// 1. Initialize with defaults
+const onion = new OnionAI({
+  preventPromptInjection: true,
+  piiSafe: true,
+  dbSafe: true
+});
+
+// 2. Sanitize user input
+const safe = await onion.sanitize(
+  "Ignore rules! My email is admin@corp.com"
+);
+
+console.log(safe);
+// Output: "[EMAIL_REDACTED]"
+// (Injection blocked & PII redacted)</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="reference" class="features section-dark">
+        <div class="container">
+            <h2 class="section-title">How It Works (The Layers)</h2>
+            <p class="section-sub">Onion AI passes your prompt through these security checks in order.</p>
+
+            <div class="grid-table">
+                
+                <!-- Sanitizer -->
+                <div class="card ref-card">
+                    <div class="card-header">
+                        <div class="icon-box"><i data-lucide="sparkles"></i></div>
+                        <div>
+                            <h3>inputSanitization</h3>
+                            <span class="tag">Sanitizer Layer</span>
+                        </div>
+                    </div>
+                    <p>Cleans invisible and malicious characters to prevent XSS and confusion attacks.</p>
+                    <table class="ref-table">
+                        <tr><th>Property</th><th>Default</th><th>Description</th></tr>
+                        <tr><td><code>sanitizeHtml</code></td><td>true</td><td>Removes <code>&lt;script&gt;</code> & HTML tags.</td></tr>
+                        <tr><td><code>removeZeroWidth</code></td><td>true</td><td>Strips invisible unicode chars.</td></tr>
+                        <tr><td><code>normalizeMarkdown</code></td><td>true</td><td>Fixes excessive newlines.</td></tr>
+                    </table>
+                </div>
+
+                <!-- PII -->
+                <div class="card ref-card">
+                    <div class="card-header">
+                        <div class="icon-box"><i data-lucide="eye-off"></i></div>
+                        <div>
+                            <h3>piiProtection</h3>
+                            <span class="tag">Privacy Layer</span>
+                        </div>
+                    </div>
+                    <p>Redacts sensitive personal data using strict regex patterns.</p>
+                    <table class="ref-table">
+                        <tr><th>Property</th><th>Default</th><th>Description</th></tr>
+                        <tr><td><code>maskEmail</code></td><td>true</td><td>Redacts email addresses.</td></tr>
+                        <tr><td><code>maskPhone</code></td><td>true</td><td>Redacts phone numbers.</td></tr>
+                        <tr><td><code>maskSSN</code></td><td>true</td><td>Redacts US SSNs.</td></tr>
+                        <tr><td><code>maskIP</code></td><td>true</td><td>Redacts IPv4 addresses.</td></tr>
+                    </table>
+                </div>
+
+                <!-- Guard -->
+                <div class="card ref-card">
+                    <div class="card-header">
+                        <div class="icon-box"><i data-lucide="shield-alert"></i></div>
+                        <div>
+                            <h3>promptInjection</h3>
+                            <span class="tag">Guard Layer</span>
+                        </div>
+                    </div>
+                    <p>Prevents jailbreaks and system override attempts.</p>
+                    <table class="ref-table">
+                        <tr><th>Property</th><th>Default</th><th>Description</th></tr>
+                        <tr><td><code>blockPhrases</code></td><td>[...]</td><td>Blocks "Ignore previous..." etc.</td></tr>
+                        <tr><td><code>heuristics</code></td><td>true</td><td>Detects patterns like "DAN Mode".</td></tr>
+                    </table>
+                </div>
+
+                <!-- Vault -->
+                <div class="card ref-card">
+                    <div class="card-header">
+                        <div class="icon-box"><i data-lucide="database"></i></div>
+                        <div>
+                            <h3>dbProtection</h3>
+                            <span class="tag">Vault Layer</span>
+                        </div>
+                    </div>
+                    <p>Enforces read-only safety for Agentic SQL tools.</p>
+                    <table class="ref-table">
+                        <tr><th>Property</th><th>Default</th><th>Description</th></tr>
+                        <tr><td><code>mode</code></td><td>'read-only'</td><td>Blocks non-SELECT queries.</td></tr>
+                        <tr><td><code>forbidden</code></td><td>['DROP'...]</td><td>Explicitly bans destructive keywords.</td></tr>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Onion AI. Built by <a href="https://github.com/himanshu-mamgain">Himanshu Mamgain</a>.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
