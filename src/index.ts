@@ -19,16 +19,16 @@ export interface SafePromptResult {
 }
 
 export class OnionAI {
-    private config: OnionConfig;
-    private simpleConfig?: SimpleOnionConfig;
-    private sanitizer: Sanitizer;
-    private guard: Guard;
-    private sentry: Sentry;
-    private vault: Vault;
-    private validator: Validator;
-    private enhancer: Enhancer;
-    private privacy: Privacy;
-    private signatureEngine?: SignatureEngine;
+    public readonly config: OnionConfig;
+    public readonly simpleConfig?: SimpleOnionConfig;
+    public readonly sanitizer: Sanitizer;
+    public readonly guard: Guard;
+    public readonly sentry: Sentry;
+    public readonly vault: Vault;
+    public readonly validator: Validator;
+    public readonly enhancer: Enhancer;
+    public readonly privacy: Privacy;
+    public readonly signatureEngine?: SignatureEngine;
 
     constructor(config: OnionInputConfig | SimpleOnionConfig = {}) {
         // Handle Simple Configuration
@@ -321,11 +321,36 @@ export class OnionAI {
 
         return { isValid: false, error: "No valid signature or watermark found" };
     }
+
+    /**
+     * Removes invisible watermarks/signatures from the content.
+     * Useful for cleaning data before database storage.
+     */
+    stripSignature(content: string): string {
+        if (!this.signatureEngine) {
+            // If engine not loaded, we can't strip using it. 
+            // Return content as is? Or warn?
+            // User might want to strip without configured secret if they just want to clean.
+            // But stripping requires header constants which are in the engine.
+            // Assuming if they call this, they have signature enabled or at least configured.
+            // If strictly not enabled, we throw or return content.
+            return content;
+        }
+        return this.signatureEngine.strip(content);
+    }
 }
 
 export * from './config';
 export * from './middleware';
-export * from './middleware';
+export * from './middleware/circuitBreaker';
+export { Sanitizer } from './layers/sanitizer';
+export { Guard } from './layers/guard';
+export { Sentry } from './layers/sentry';
+export { Vault } from './layers/vault';
+export { Validator } from './layers/validator';
+export { Enhancer } from './layers/enhancer';
+export { Privacy } from './layers/privacy';
+export { ToonConverter } from './layers/toon';
 export * from './classifiers';
 export * from './layers/signature';
 export * from './systemInstruction';

@@ -9,6 +9,10 @@ Think of it as **[Helmet](https://helmetjs.github.io/) for LLMs**.
 [![npm version](https://img.shields.io/npm/v/onion-ai.svg?style=flat-square)](https://www.npmjs.com/package/onion-ai)
 [![license](https://img.shields.io/npm/l/onion-ai.svg?style=flat-square)](https://github.com/himanshu-mamgain/onion-ai/blob/main/LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-onion--ai-8b5cf6?style=flat-square&logo=github)](https://himanshu-mamgain.github.io/onion-ai/)
+![Bun Compatible](https://img.shields.io/badge/Bun-Compatible-f472b6?style=flat-square&logo=bun)
+
+⭐ **Used by 1,300+ developers**  
+📦 **1k+ npm downloads**
 
 ---
 
@@ -260,9 +264,36 @@ const verification = onion.verify(result.content, result.signature);
 if (verification.isValid) {
     console.log("Verified! Source:", verification.payload.employeeId);
 }
+
+// 3. Strip Signature (New)
+// Remove the invisible characters before saving to DB or sending to context window
+const cleanContent = onion.stripSignature(result.content);
 ```
 
-### 4. System Instruction Optimizer (New)
+### 4. Privacy Restoration (New)
+If you use `reversible: true` in PII configuration, you can restore original data from the "tokenized" version.
+
+```typescript
+const onion = new OnionAI({ 
+    piiSafe: true, 
+    // To configure reversibility, use the object format:
+    piiProtection: { 
+        enabled: true, 
+        reversible: true 
+    } 
+});
+
+const result = await onion.sanitize("Contact admin@example.com");
+// result.output -> "Contact {{EMAIL_1}}"
+
+// ... Process with LLM ...
+
+// Restore original implementation
+const original = onion.privacy.restore(result.output, result.metadata.piiMap);
+console.log(original); // "Contact admin@example.com"
+```
+
+### 5. System Instruction Optimizer (New)
 Save tokens and enforce security by compressing your system rules.
 
 ```typescript

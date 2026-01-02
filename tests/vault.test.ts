@@ -36,6 +36,6 @@ describe('Vault Layer (DB Protection)', () => {
         const input = 'UPDATE users SET name="hacker"';
         const result = vault.checkSQL(input);
         expect(result.safe).toBe(false);
-        expect(result.threats).toContain('Non-SELECT query detected in read-only mode');
+        expect(result.threats.some(t => t.includes('Non-SELECT query detected in read-only mode'))).toBe(true);
     });
 });

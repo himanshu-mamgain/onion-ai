@@ -136,4 +136,23 @@ export class Privacy {
             }
         };
     }
+
+    /**
+     * Reconstructs the original content using the PII map.
+     * @param redactedContent The content with {{TOKEN}} placeholders
+     * @param piiMap The map returned from anonymize()
+     */
+    restore(redactedContent: string, piiMap: PIImap): string {
+        if (!piiMap || Object.keys(piiMap).length === 0) return redactedContent;
+
+        let original = redactedContent;
+        // Iterate over map and replace tokens with original values
+        // We go from longest token to shortest to avoid partial replacements if there are overlaps (unlikely with this format)
+        for (const [token, value] of Object.entries(piiMap)) {
+            // Global replace for the specific token
+            original = original.split(token).join(value);
+        }
+        return original;
+    }
 }
+

@@ -12,7 +12,9 @@ describe('Privacy Layer (PII Redaction)', () => {
             maskSSN: true,
             maskIP: true,
             detectSecrets: true,
-            custom: []
+            custom: [],
+            reversible: false,
+            locale: ['US']
         });
     });
 
@@ -21,7 +23,7 @@ describe('Privacy Layer (PII Redaction)', () => {
         const result = privacy.anonymize(input);
         expect(result.sanitizedValue).toContain('[EMAIL_REDACTED]');
         expect(result.sanitizedValue).not.toContain('test.user@example.com');
-        expect(result.threats).toContain('PII Detected: Email Address');
+        expect(result.threats).toContain('PII Detected: EMAIL');
     });
 
     test('should redact phone numbers', () => {
@@ -56,7 +58,9 @@ describe('Privacy Layer (PII Redaction)', () => {
             maskSSN: true,
             maskIP: true,
             detectSecrets: true,
-            custom: []
+            custom: [],
+            reversible: false,
+            locale: ['US']
         });
 
         const input = 'My OpenAI key is sk-abcdef1234567890abcdef1234567890abcdef123456 and GitHub token is ghp_1234567890abcdef1234567890abcdef36char';

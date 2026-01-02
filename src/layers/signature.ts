@@ -111,6 +111,34 @@ export class SignatureEngine {
         }
     }
 
+    /**
+     * Removes the invisible signature from the content.
+     * Useful for saving safe content to DB without the heavy watermark.
+     */
+    strip(content: string): string {
+        // Find the last occurrence of the Header
+        const lastHeaderIndex = content.lastIndexOf(this.HEADER);
+        if (lastHeaderIndex === -1) return content;
+
+        // Verify if the rest comprises only ZW chars
+        const potentialSignature = content.slice(lastHeaderIndex + 1);
+        const isSignature = /^[​‌]+$/.test(potentialSignature); // Regex for ZW_ZERO and ZW_ONE
+
+        if (isSignature) {
+            return content.slice(0, lastHeaderIndex);
+        }
+
+        // Fallback: If regex check is complex or we trust the header structure for our own app:
+        // Actually, let's strictly check using our defined constants to be safe
+        for (const char of potentialSignature) {
+            if (char !== this.ZW_ZERO && char !== this.ZW_ONE) {
+                return content; // Not a signature
+            }
+        }
+
+        return content.slice(0, lastHeaderIndex);
+    }
+
     // --- Internal Helpers ---
 
     private get mode(): string {

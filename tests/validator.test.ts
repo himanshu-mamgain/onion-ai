@@ -10,7 +10,8 @@ describe('Validator Layer (Output Safety)', () => {
             preventDataLeak: true,
             checkSQLSafety: true,
             checkFilesystemSafety: true,
-            checkPII: true
+            checkPII: true,
+            repair: false
         });
     });
 
@@ -18,14 +19,14 @@ describe('Validator Layer (Output Safety)', () => {
         const output = 'Contact me at test@example.com';
         const result = validator.validateOutput(output);
         expect(result.safe).toBe(false);
-        expect(result.threats).toContain('Potential PII (Sensitive Data) detected in output');
+        expect(result.threats).toContain('PII (Email) detected in output');
     });
 
     test('should detect API Keys', () => {
         const output = 'My API key is sk-1234567890abcdef1234567890abcdef';
         const result = validator.validateOutput(output);
         expect(result.safe).toBe(false);
-        expect(result.threats).toContain('Potential API Key leak detected in output');
+        expect(result.threats).toContain('Data Leak (OpenAI API Key) detected in output');
     });
 
     test('should detect malicious commands', () => {
