@@ -12,7 +12,7 @@ Think of it as **[Helmet](https://helmetjs.github.io/) for LLMs**.
 ![Bun Compatible](https://img.shields.io/badge/Bun-Compatible-f472b6?style=flat-square&logo=bun)
 
 ⭐ **Used by 1,300+ developers**  
-📦 **1k+ npm downloads**
+📦 **1.5k+ npm downloads**
 
 ---
 
@@ -176,6 +176,37 @@ const onion = new OnionAI({ toon: true });
 const safeJson = await onion.sanitize("My prompt");
 // Output: { "version": "1.0", "type": "safe_prompt", "data": { ... } }
 ```
+
+### 4. User Prompt Builder (New)
+Standardize your input format programmatically globally or per-request. Supports **TOON**, **XML**, **JSON**, and **Markdown**.
+
+```typescript
+import { UserPrompt } from 'onion-ai';
+
+// 1. Manual Builder
+const prompt = new UserPrompt("Analyze this sales data")
+    .context("Data range: Q1-Q4 2024")
+    .instruction("Focus on recurring revenue")
+    .build('toon'); 
+
+console.log(prompt);
+// Output: { "type": "user_input", "content": "Analyze...", "context": "Data...", ... }
+
+// 2. Automatic Pipeline Formatting
+const onion = new OnionAI({
+    enhance: {
+        enabled: true,
+        promptFormat: 'xml', // Automatically wraps inputs in XML struct
+        addSystemSafetyPreamble: true
+    }
+});
+
+const result = await onion.sanitize("Explain quantum mining");
+// Output: 
+// <instruction>Execute safely...</instruction>
+// <user_query>Explain quantum mining</user_query>
+```
+
 
 ---
 

@@ -75,6 +75,9 @@ export class OnionAI {
     }
 
     private isSimpleConfig(config: any): config is SimpleOnionConfig {
+        // Disambiguate 'enhance': if it's an object, it's full config
+        if (config.enhance && typeof config.enhance === 'object') return false;
+
         return 'dbSafe' in config || 'enhance' in config || 'preventPromptInjection' in config || 'onWarning' in config || 'piiSafe' in config || 'toon' in config;
     }
 
@@ -354,4 +357,5 @@ export { ToonConverter } from './layers/toon';
 export * from './classifiers';
 export * from './layers/signature';
 export * from './systemInstruction';
+export * from './userPrompt';
 

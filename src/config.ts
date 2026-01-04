@@ -72,7 +72,8 @@ const EnhanceSchema = z.object({
     enabled: z.boolean().default(false),
     addSystemSafetyPreamble: z.boolean().default(true),
     structurePrompt: z.boolean().default(true),
-    preserveContext: z.boolean().default(true)
+    preserveContext: z.boolean().default(true),
+    promptFormat: z.enum(['plain', 'markdown', 'toon', 'json', 'xml']).default('plain')
 });
 
 export const OnionConfigSchema = z.object({
@@ -134,7 +135,8 @@ export const OnionConfigSchema = z.object({
         enabled: false,
         addSystemSafetyPreamble: true,
         structurePrompt: true,
-        preserveContext: true
+        preserveContext: true,
+        promptFormat: "plain"
     }),
     piiProtection: z.object({
         enabled: z.boolean().default(false),
